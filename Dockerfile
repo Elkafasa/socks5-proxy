@@ -1,5 +1,3 @@
 FROM serjs/go-socks5-proxy
-
 EXPOSE 1080
-
-CMD ["-username", "user", "-password", "pass"]
+CMD ["-username", "proxyuser", "-password", "proxypass"]
