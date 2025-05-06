@@ -19,10 +19,10 @@ WORKDIR /opt
 RUN git clone https://github.com/Elkafasa/socks5-proxy
 
 # Download and build Dante SOCKS5 proxy from source
-WORKDIR /opt
 RUN wget https://www.inet.no/dante/files/dante-1.4.2.tar.gz && \
     tar xzf dante-1.4.2.tar.gz && \
-    cd dante-1.4.2 && ./configure && make && make install
+    cd dante-1.4.2 && \
+    ./configure && make && make install
 
 # Copy Dante config
 RUN mkdir -p /etc/socks5-proxy && \
@@ -41,9 +41,11 @@ RUN curl -s https://bin.equinox.io/c/bNyj1mQVY4c/ngrok-v3-stable-linux-amd64.tgz
 # Add ngrok auth token
 RUN ngrok config add-authtoken 2bwYpX7UTbEJ9XTZJkFJwbMsHK1_6U52YGGsG37bUmGYgQL89
 
-# Expose both SOCKS5 and HTTP keep-alive ports
+# Expose SOCKS5 port
 EXPOSE 1080
-EXPOSE 8080
 
-# Start Dante, ngrok, and keep-alive
-CMD bash -c "/usr/local/sbin/sockd -f /etc/socks5-proxy/sockd.conf & ngrok tcp 1080 & python3 /opt/socks5-proxy/keep_alive.py"
+# Start Dante, then ngrok for that port, then run the keep-alive
+CMD bash -c "/usr/local/sbin/sockd -f /etc/socks5-proxy/sockd.conf & \
+             sleep 2 && \
+             ngrok tcp 1080 > /opt/socks5-proxy/ngrok.log & \
+             python3 /opt/socks5-proxy/keep_alive.py"
