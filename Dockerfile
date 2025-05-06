@@ -1,25 +1,36 @@
-FROM ubuntu:20.04
+FROM debian:bullseye-slim
 
-# Install dependencies
+# Install required packages
 RUN apt-get update && apt-get install -y \
     git \
     curl \
+    wget \
     build-essential \
-    dante-server \
+    libwrap0-dev \
+    libpam0g-dev \
     python3 \
     && rm -rf /var/lib/apt/lists/*
 
-# Clone your GitHub repo
-RUN mkdir -p /opt/socks5-proxy
-RUN git clone https://github.com/Elkafasa/socks5-proxy /opt/socks5-proxy
+# Clone your socks5-proxy config repo
+WORKDIR /opt
+RUN git clone https://github.com/Elkafasa/socks5-proxy
 
-# Copy sockd.conf into system location
-RUN mkdir -p /etc/socks5-proxy
-RUN cp /opt/socks5-proxy/sockd.conf /etc/socks5-proxy/
+# Download and build Dante SOCKS5 proxy from source
+RUN wget https://www.inet.no/dante/files/dante-1.4.2.tar.gz && \
+    tar xzf dante-1.4.2.tar.gz && \
+    cd dante-1.4.2 && \
+    ./configure && make && make install
 
-# Expose proxy and keep-alive ports
+# Copy config
+RUN mkdir -p /etc/socks5-proxy && \
+    cp /opt/socks5-proxy/sockd.conf /etc/socks5-proxy/
+
+# Copy your keep-alive script into the image
+COPY keep_alive.py /opt/socks5-proxy/keep_alive.py
+
+# Expose both SOCKS5 and HTTP keep-alive ports
 EXPOSE 1080
 EXPOSE 8080
 
-# Start SOCKS5 server and keep-alive script
-CMD bash -c "/usr/sbin/sockd -f /etc/socks5-proxy/sockd.conf & python3 /opt/socks5-proxy/keep_alive.py"
+# Start Dante and your keep-alive Python script
+CMD bash -c "/usr/local/sbin/sockd -f /etc/socks5-proxy/sockd.conf & python3 /opt/socks5-proxy/keep_alive.py"
