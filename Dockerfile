@@ -9,6 +9,9 @@ RUN apt-get update && apt-get install -y \
     openssl \
     && rm -rf /var/lib/apt/lists/*
 
+# Ensure the sockd service is correctly installed
+RUN which sockd || echo "sockd is not in the PATH"
+
 # Install any required Python packages (if you need any)
 # RUN pip3 install -r requirements.txt
 
@@ -23,4 +26,4 @@ COPY keep_alive.py /keep_alive.py
 RUN chmod +x /keep_alive.py
 
 # Start Dante SOCKS server (sockd) and the keep-alive service
-CMD ["sh", "-c", "sockd && python3 /keep_alive.py"]
+CMD ["sh", "-c", "/usr/sbin/sockd && python3 /keep_alive.py"]
