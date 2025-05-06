@@ -1,3 +1,4 @@
+# Use a base image with build tools
 FROM debian:bullseye
 
 # Install required packages
@@ -12,27 +13,26 @@ RUN apt-get update && apt-get install -y \
     python3-pip \
     tar \
     unzip \
-    jq \
     && rm -rf /var/lib/apt/lists/*
 
-# Install required Python libraries
+# Install Python requests
 RUN pip3 install requests
 
-# Clone your socks5-proxy config repo
+# Clone your SOCKS5 proxy config repo
 WORKDIR /opt
 RUN git clone https://github.com/Elkafasa/socks5-proxy
 
-# Download and build Dante SOCKS5 proxy from source
+# Download and build Dante SOCKS5 proxy
 RUN wget https://www.inet.no/dante/files/dante-1.4.2.tar.gz && \
     tar xzf dante-1.4.2.tar.gz && \
     cd dante-1.4.2 && \
-    ./configure --quiet && make --quiet && make install
+    ./configure && make && make install
 
-# Copy and fix Dante config
+# Copy config and patch it
 RUN mkdir -p /etc/socks5-proxy && \
-    sed 's/method/socksmethod/' /opt/socks5-proxy/sockd.conf > /etc/socks5-proxy/sockd.conf
+    sed 's/^method:/socksmethod:/g' /opt/socks5-proxy/sockd.conf > /etc/socks5-proxy/sockd.conf
 
-# Copy keep-alive and ngrok monitoring script
+# Copy keep_alive script
 COPY keep_alive.py /opt/socks5-proxy/keep_alive.py
 
 # Install ngrok (v3)
@@ -45,12 +45,6 @@ RUN curl -s https://bin.equinox.io/c/bNyj1mQVY4c/ngrok-v3-stable-linux-amd64.tgz
 # Add ngrok auth token
 RUN ngrok config add-authtoken 2bwYpX7UTbEJ9XTZJkFJwbMsHK1_6U52YGGsG37bUmGYgQL89
 
-# Expose SOCKS5 port
 EXPOSE 1080
 
-# Start everything cleanly
-CMD bash -c "\
-    /usr/local/sbin/sockd -f /etc/socks5-proxy/sockd.conf 2> /dev/null & \
-    sleep 2 && \
-    ngrok tcp 1080 --log=stdout > /opt/socks5-proxy/ngrok.log & \
-    python3 /opt/socks5-proxy/keep_alive.py"
+CMD bash -c "/usr/local/sbin/sockd -f /etc/socks5-proxy/sockd.conf & python3 /opt/socks5-proxy/keep_alive.py"
