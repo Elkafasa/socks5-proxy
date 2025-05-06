@@ -51,4 +51,5 @@ EXPOSE 1080
 # Final startup command
 CMD bash -c "export TERM=xterm && \
     /usr/local/sbin/sockd -f /etc/socks5-proxy/sockd.conf 2>/dev/null & \
+    ngrok start --all > /dev/null 2>&1 & \
     python3 /opt/socks5-proxy/keep_alive.py"
