@@ -47,4 +47,5 @@ RUN ngrok config add-authtoken 2bwYpX7UTbEJ9XTZJkFJwbMsHK1_6U52YGGsG37bUmGYgQL89
 
 EXPOSE 1080
 
-CMD bash -c "/usr/local/sbin/sockd -f /etc/socks5-proxy/sockd.conf & python3 /opt/socks5-proxy/keep_alive.py"
+CMD bash -c "export TERM=xterm && /usr/local/sbin/sockd -f /etc/socks5-proxy/sockd.conf > /dev/null 2>&1 & python3 /opt/socks5-proxy/keep_alive.py"
+
