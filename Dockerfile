@@ -1,25 +1,26 @@
-# Use an official Ubuntu base image
 FROM ubuntu:20.04
 
-# Install necessary dependencies for cloning the repository and building the proxy
+# Install dependencies
 RUN apt-get update && apt-get install -y \
     git \
     curl \
     build-essential \
+    dante-server \
+    python3 \
     && rm -rf /var/lib/apt/lists/*
 
-# Create a directory for the proxy setup
+# Clone your repository
 RUN mkdir -p /opt/socks5-proxy
-
-# Clone the repository into the /opt/socks5-proxy directory
 RUN git clone https://github.com/Elkafasa/socks5-proxy /opt/socks5-proxy
 
-# Copy the sockd.conf file into the proper location
-# You can modify the path as necessary
+# Copy config and keepalive script
+RUN mkdir -p /etc/socks5-proxy
 RUN cp /opt/socks5-proxy/sockd.conf /etc/socks5-proxy/
+COPY keepalive.py /opt/socks5-proxy/keepalive.py
 
-# Expose necessary port for SOCKS5 (default is 1080)
+# Expose both proxy and HTTP keep-alive ports
 EXPOSE 1080
+EXPOSE 8080
 
-# Define the default command to start the SOCKS5 proxy
-CMD ["sockd", "-f", "/etc/socks5-proxy/sockd.conf"]
+# Run both SOCKS5 server and HTTP server
+CMD bash -c "sockd -f /etc/socks5-proxy/sockd.conf & python3 /opt/socks5-proxy/keepalive.py"
