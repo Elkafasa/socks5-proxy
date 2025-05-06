@@ -1,0 +1,6 @@
+authtoken: 2bwYpX7UTbEJ9XTZJkFJwbMsHK1_6U52YGGsG37bUmGYgQL89
+version: 2
+tunnels:
+  socks5:
+    addr: 1080
+    proto: tcp
