@@ -1,43 +1,33 @@
+import subprocess
 import time
 import requests
-import subprocess
 import re
+import os
 
-def get_ngrok_tcp_address():
+# Start ngrok TCP tunnel to port 1080
+subprocess.Popen(["ngrok", "tcp", "1080"])
+time.sleep(5)  # Give ngrok time to initialize
+
+def print_proxy_info():
     try:
-        result = subprocess.run(
-            ["curl", "-s", "http://localhost:4040/api/tunnels"],
-            capture_output=True,
-            text=True
-        )
-        if result.returncode == 0:
-            data = result.stdout
-            match = re.search(r'"public_url":"tcp://(.+?)"', data)
-            if match:
-                return match.group(1)
+        res = requests.get("http://localhost:4040/api/tunnels")
+        tunnels = res.json().get("tunnels", [])
+        for tunnel in tunnels:
+            if tunnel["proto"] == "tcp":
+                addr = tunnel["public_url"]
+                host, port = re.findall(r"tcp://(.+):(\d+)", addr)[0]
+                os.system("clear")
+                print("✅ SOCKS5 Proxy is Running!\n")
+                print("Use this proxy on your MacBook:\n")
+                print(f"Host: {host}")
+                print(f"Port: {port}")
+                print(f"Protocol: SOCKS5\n")
+                print("📘 Set it in System Settings > Network > Proxies")
+                print("Or use it in Terminal:\n")
+                print(f"curl --socks5-hostname {host}:{port} https://example.com")
     except Exception as e:
-        return None
-    return None
+        print(f"❌ Error fetching ngrok info: {e}")
 
-def show_instructions(address):
-    host, port = address.split(":")
-    print("\n==================== SOCKS5 PROXY READY ====================")
-    print(f"🔗 Proxy address: {host}:{port}")
-    print("📌 macOS setup:")
-    print("    - System Settings > Network > Advanced > Proxies")
-    print("    - Enable SOCKS Proxy and enter:")
-    print(f"        Server: {host}")
-    print(f"        Port:   {port}")
-    print("===========================================================\n")
-
-def keep_alive():
-    while True:
-        address = get_ngrok_tcp_address()
-        if address:
-            show_instructions(address)
-        else:
-            print("🔄 Waiting for ngrok tunnel to come online...")
-        time.sleep(60)
-
-if __name__ == "__main__":
-    keep_alive()
+while True:
+    print_proxy_info()
+    time.sleep(30)
