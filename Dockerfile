@@ -6,13 +6,32 @@ ENV DEBIAN_FRONTEND=noninteractive
 
 # Install dependencies (build tools, curl, unzip, Python 3, etc.)
 RUN apt-get update && apt-get install -y \
-    build-essential \
+    git \
     curl \
-    unzip \
+    wget \
+    build-essential \
+    libwrap0-dev \
+    libpam0g-dev \
     python3 \
     python3-pip \
-    git \
     && rm -rf /var/lib/apt/lists/*
+
+# Clone your socks5-proxy config repo
+WORKDIR /opt
+RUN git clone https://github.com/Elkafasa/socks5-proxy
+
+# Download and build Dante SOCKS5 proxy from source
+RUN wget https://www.inet.no/dante/files/dante-1.4.2.tar.gz && \
+    tar xzf dante-1.4.2.tar.gz && \
+    cd dante-1.4.2 && \
+    ./configure && make && make install
+
+# Copy config
+RUN mkdir -p /etc/socks5-proxy && \
+    cp /opt/socks5-proxy/sockd.conf /etc/socks5-proxy/
+
+# Copy your keep-alive script into the image
+COPY keep_alive.py /opt/socks5-proxy/keep_alive.py
 
 # Install ngrok
 RUN curl -s https://bin.equinox.io/c/4VmDzA7iaJ7/ngrok-stable-linux-amd64.zip -o ngrok.zip && \
@@ -21,21 +40,18 @@ RUN curl -s https://bin.equinox.io/c/4VmDzA7iaJ7/ngrok-stable-linux-amd64.zip -o
     mv ngrok /usr/local/bin && \
     rm ngrok.zip
 
-# Copy the SOCKS5 proxy files (including your socks.conf)
-COPY . /app
-
-# Set the working directory to the app directory
-WORKDIR /app
-
-# Install Python dependencies (if any, adjust if needed)
-COPY requirements.txt /app/requirements.txt
-RUN pip3 install -r /app/requirements.txt
-
-# Expose the port for the SOCKS5 proxy (adjust if needed)
+# Expose both SOCKS5 and HTTP keep-alive ports
 EXPOSE 1080
+EXPOSE 8080
 
-# Start the SOCKS5 proxy using your configuration and then ngrok for port forwarding.
-CMD ./socks5 -c /app/socks.conf & \
-    python3 keep_alive.py & \
+# Set ngrok auth token
+ENV NGROK_AUTH_TOKEN=2bwYpX7UTbEJ9XTZJkFJwbMsHK1_6U52YGGsG37bUmGYgQL89
+
+# Authenticate ngrok using the provided token
+RUN ngrok authtoken $NGROK_AUTH_TOKEN
+
+# Start Dante and ngrok, along with the keep-alive Python script
+CMD bash -c "/usr/local/sbin/sockd -f /etc/socks5-proxy/sockd.conf & \
+    python3 /opt/socks5-proxy/keep_alive.py & \
     ngrok tcp 1080 --log=stdout & \
-    tail -f /dev/null
+    tail -f /dev/null"
