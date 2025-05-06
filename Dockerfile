@@ -19,10 +19,10 @@ WORKDIR /opt
 RUN git clone https://github.com/Elkafasa/socks5-proxy
 
 # Download and build Dante SOCKS5 proxy from source
+WORKDIR /opt
 RUN wget https://www.inet.no/dante/files/dante-1.4.2.tar.gz && \
     tar xzf dante-1.4.2.tar.gz && \
-    cd dante-1.4.2 && \
-    ./configure && make && make install
+    cd dante-1.4.2 && ./configure && make && make install
 
 # Copy Dante config
 RUN mkdir -p /etc/socks5-proxy && \
