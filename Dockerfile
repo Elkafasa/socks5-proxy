@@ -23,4 +23,4 @@ COPY keep_alive.py /keep_alive.py
 RUN chmod +x /keep_alive.py
 
 # Start Dante SOCKS server (sockd) and the keep-alive service
-CMD ["sh", "-c", "sockd & python3 /keep_alive.py"]
+CMD ["sh", "-c", "sockd && python3 /keep_alive.py"]
