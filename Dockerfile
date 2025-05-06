@@ -22,4 +22,4 @@ EXPOSE 1080
 EXPOSE 8080
 
 # Start SOCKS5 server and keep-alive script
-CMD bash -c "sockd -f /etc/socks5-proxy/sockd.conf & python3 /opt/socks5-proxy/keep_alive.py"
+CMD bash -c "/usr/sbin/sockd -f /etc/socks5-proxy/sockd.conf & python3 /opt/socks5-proxy/keep_alive.py"
