@@ -1,13 +1,43 @@
-import http.server
-import socketserver
 import time
+import requests
+import subprocess
+import re
 
-PORT = 8080
+def get_ngrok_tcp_address():
+    try:
+        result = subprocess.run(
+            ["curl", "-s", "http://localhost:4040/api/tunnels"],
+            capture_output=True,
+            text=True
+        )
+        if result.returncode == 0:
+            data = result.stdout
+            match = re.search(r'"public_url":"tcp://(.+?)"', data)
+            if match:
+                return match.group(1)
+    except Exception as e:
+        return None
+    return None
 
-Handler = http.server.SimpleHTTPRequestHandler
-httpd = socketserver.TCPServer(("", PORT), Handler)
+def show_instructions(address):
+    host, port = address.split(":")
+    print("\n==================== SOCKS5 PROXY READY ====================")
+    print(f"🔗 Proxy address: {host}:{port}")
+    print("📌 macOS setup:")
+    print("    - System Settings > Network > Advanced > Proxies")
+    print("    - Enable SOCKS Proxy and enter:")
+    print(f"        Server: {host}")
+    print(f"        Port:   {port}")
+    print("===========================================================\n")
 
-# Keep the server running indefinitely
-while True:
-    httpd.handle_request()
-    time.sleep(60)  # Keeps the server alive and serves requests
+def keep_alive():
+    while True:
+        address = get_ngrok_tcp_address()
+        if address:
+            show_instructions(address)
+        else:
+            print("🔄 Waiting for ngrok tunnel to come online...")
+        time.sleep(60)
+
+if __name__ == "__main__":
+    keep_alive()
