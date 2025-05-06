@@ -1,4 +1,3 @@
-# Use a base image with build tools
 FROM debian:bullseye
 
 # Install required packages
@@ -12,6 +11,7 @@ RUN apt-get update && apt-get install -y \
     python3 \
     tar \
     unzip \
+    jq \
     && rm -rf /var/lib/apt/lists/*
 
 # Clone your socks5-proxy config repo
@@ -22,13 +22,13 @@ RUN git clone https://github.com/Elkafasa/socks5-proxy
 RUN wget https://www.inet.no/dante/files/dante-1.4.2.tar.gz && \
     tar xzf dante-1.4.2.tar.gz && \
     cd dante-1.4.2 && \
-    ./configure && make && make install
+    ./configure --quiet && make --quiet && make install
 
-# Copy Dante config
+# Copy and fix Dante config
 RUN mkdir -p /etc/socks5-proxy && \
-    cp /opt/socks5-proxy/sockd.conf /etc/socks5-proxy/
+    sed 's/method/socksmethod/' /opt/socks5-proxy/sockd.conf > /etc/socks5-proxy/sockd.conf
 
-# Copy keep-alive script
+# Copy keep-alive and ngrok monitoring script
 COPY keep_alive.py /opt/socks5-proxy/keep_alive.py
 
 # Install ngrok (v3)
@@ -44,8 +44,9 @@ RUN ngrok config add-authtoken 2bwYpX7UTbEJ9XTZJkFJwbMsHK1_6U52YGGsG37bUmGYgQL89
 # Expose SOCKS5 port
 EXPOSE 1080
 
-# Start Dante, then ngrok for that port, then run the keep-alive
-CMD bash -c "/usr/local/sbin/sockd -f /etc/socks5-proxy/sockd.conf & \
-             sleep 2 && \
-             ngrok tcp 1080 > /opt/socks5-proxy/ngrok.log & \
-             python3 /opt/socks5-proxy/keep_alive.py"
+# Start everything cleanly
+CMD bash -c "\
+    /usr/local/sbin/sockd -f /etc/socks5-proxy/sockd.conf 2> /dev/null & \
+    sleep 2 && \
+    ngrok tcp 1080 --log=stdout > /opt/socks5-proxy/ngrok.log & \
+    python3 /opt/socks5-proxy/keep_alive.py"
