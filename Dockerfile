@@ -1,35 +1,25 @@
-FROM debian:bullseye-slim
+# Use an official Ubuntu base image
+FROM ubuntu:20.04
 
-# Install necessary packages (Dante + Python and utilities)
+# Install necessary dependencies for cloning the repository and building the proxy
 RUN apt-get update && apt-get install -y \
-    dante-server \
-    python3 \
-    python3-pip \
-    ca-certificates \
-    openssl \
+    git \
+    curl \
+    build-essential \
     && rm -rf /var/lib/apt/lists/*
 
-# Search for sockd in the system
-RUN find / -name sockd
+# Create a directory for the proxy setup
+RUN mkdir -p /opt/socks5-proxy
 
-# Reinstall dante-server to make sure sockd is installed
-RUN apt-get install --reinstall -y dante-server
+# Clone the repository into the /opt/socks5-proxy directory
+RUN git clone https://github.com/Elkafasa/socks5-proxy /opt/socks5-proxy
 
-# Check if sockd is now correctly installed
-RUN which sockd || echo "sockd is still not in the PATH"
+# Copy the sockd.conf file into the proper location
+# You can modify the path as necessary
+RUN cp /opt/socks5-proxy/sockd.conf /etc/socks5-proxy/
 
-# Install any required Python packages (if you need any)
-# RUN pip3 install -r requirements.txt
+# Expose necessary port for SOCKS5 (default is 1080)
+EXPOSE 1080
 
-# Expose the ports needed for SOCKS5 and HTTP (if using web service)
-EXPOSE 1080 8080
-
-# Copy the sockd.conf file into the container
-COPY sockd.conf /etc/sockd.conf
-
-# Create a simple keep-alive service (e.g., Python HTTP server)
-COPY keep_alive.py /keep_alive.py
-RUN chmod +x /keep_alive.py
-
-# Start Dante SOCKS server (sockd) and the keep-alive service
-CMD ["sh", "-c", "/usr/sbin/sockd && python3 /keep_alive.py"]
+# Define the default command to start the SOCKS5 proxy
+CMD ["sockd", "-f", "/etc/socks5-proxy/sockd.conf"]
