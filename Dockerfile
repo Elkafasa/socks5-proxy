@@ -9,10 +9,14 @@ RUN apt-get update && apt-get install -y \
     libwrap0-dev \
     libpam0g-dev \
     python3 \
+    python3-pip \
     tar \
     unzip \
     jq \
     && rm -rf /var/lib/apt/lists/*
+
+# Install required Python libraries
+RUN pip3 install requests
 
 # Clone your socks5-proxy config repo
 WORKDIR /opt
