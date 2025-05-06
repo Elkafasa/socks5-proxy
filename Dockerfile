@@ -9,8 +9,14 @@ RUN apt-get update && apt-get install -y \
     openssl \
     && rm -rf /var/lib/apt/lists/*
 
-# Ensure the sockd service is correctly installed
-RUN which sockd || echo "sockd is not in the PATH"
+# Search for sockd in the system
+RUN find / -name sockd
+
+# Reinstall dante-server to make sure sockd is installed
+RUN apt-get install --reinstall -y dante-server
+
+# Check if sockd is now correctly installed
+RUN which sockd || echo "sockd is still not in the PATH"
 
 # Install any required Python packages (if you need any)
 # RUN pip3 install -r requirements.txt
