@@ -1,7 +1,6 @@
-# Use a base image with build tools
 FROM debian:bullseye
 
-# Install required packages
+# Install dependencies
 RUN apt-get update && apt-get install -y \
     git \
     curl \
@@ -18,22 +17,27 @@ RUN apt-get update && apt-get install -y \
 # Install Python requests
 RUN pip3 install requests
 
-# Clone your SOCKS5 proxy config repo
+# Workdir for app files
 WORKDIR /opt
+
+# Clone the repo (if needed — or copy instead)
 RUN git clone https://github.com/Elkafasa/socks5-proxy
 
-# Download and build Dante SOCKS5 proxy
+# Build Dante from source
 RUN wget https://www.inet.no/dante/files/dante-1.4.2.tar.gz && \
     tar xzf dante-1.4.2.tar.gz && \
     cd dante-1.4.2 && \
     ./configure && make && make install
 
-# Copy config and patch it
+# Patch sockd.conf (deprecation fix)
 RUN mkdir -p /etc/socks5-proxy && \
     sed 's/^method:/socksmethod:/g' /opt/socks5-proxy/sockd.conf > /etc/socks5-proxy/sockd.conf
 
-# Copy keep_alive script
+# Copy keep_alive.py
 COPY keep_alive.py /opt/socks5-proxy/keep_alive.py
+
+# Copy ngrok config file (must be in same folder as Dockerfile)
+COPY ngrok.yml /root/.config/ngrok/ngrok.yml
 
 # Install ngrok (v3)
 RUN curl -s https://bin.equinox.io/c/bNyj1mQVY4c/ngrok-v3-stable-linux-amd64.tgz -o ngrok.tgz && \
@@ -42,10 +46,9 @@ RUN curl -s https://bin.equinox.io/c/bNyj1mQVY4c/ngrok-v3-stable-linux-amd64.tgz
     chmod +x /usr/local/bin/ngrok && \
     rm ngrok.tgz
 
-# Add ngrok auth token
-RUN ngrok config add-authtoken 2bwYpX7UTbEJ9XTZJkFJwbMsHK1_6U52YGGsG37bUmGYgQL89
-
 EXPOSE 1080
 
-CMD bash -c "export TERM=xterm && /usr/local/sbin/sockd -f /etc/socks5-proxy/sockd.conf > /dev/null 2>&1 & python3 /opt/socks5-proxy/keep_alive.py"
-
+# Final startup command
+CMD bash -c "export TERM=xterm && \
+    /usr/local/sbin/sockd -f /etc/socks5-proxy/sockd.conf 2>/dev/null & \
+    python3 /opt/socks5-proxy/keep_alive.py"
