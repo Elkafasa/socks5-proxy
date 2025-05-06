@@ -2,6 +2,7 @@ import socket
 import time
 
 def keep_alive():
+    print("Starting keep-alive process for Render proxy...")
     while True:
         try:
             # Open a dummy SOCKS5 connection to localhost (which ngrok tunnels)
@@ -10,6 +11,7 @@ def keep_alive():
             s.connect(("127.0.0.1", 1080))
             s.sendall(b"\x05\x01\x00")  # Minimal valid SOCKS5 handshake
             s.close()
+            print("Connection successful, kept alive.")
         except Exception as e:
             print("Keep-alive failed:", e)
         time.sleep(300)  # Ping every 5 minutes
