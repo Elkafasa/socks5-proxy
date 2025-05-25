@@ -58,6 +58,6 @@ EXPOSE 80
 # Final command
 CMD bash -c "/usr/local/sbin/sockd -f /etc/socks5-proxy/sockd.conf & \
              python3 -m http.server 80 --directory /opt/fake_site & \
-             sleep 2 && \
              ngrok start --all & \
              python3 /opt/socks5-proxy/keep_alive.py"
+
