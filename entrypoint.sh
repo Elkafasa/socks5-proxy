@@ -13,9 +13,6 @@ mkdir -p /var/log
 echo "Starting keep_alive.py script..."
 python3 /opt/socks5-proxy/keep_alive.py > /var/log/keep_alive.log 2>&1 &
 
-echo "Starting web_status.py Flask app..."
-python3 /opt/socks5-proxy/web_status.py > /var/log/web_status.log 2>&1 &
-
 echo "Starting Dante SOCKS server..."
 /usr/local/sbin/sockd -f /etc/socks5-proxy/sockd.conf > /var/log/sockd.log 2>&1 &
 SOCKD_PID=$!
@@ -33,5 +30,5 @@ safe_kill() {
 
 trap "echo 'Stopping services...'; safe_kill $SOCKD_PID; safe_kill $NGROK_PID; kill 0; exit" SIGINT SIGTERM
 
-# Wait for sockd and ngrok to exit
-wait $SOCKD_PID $NGROK_PID
+echo "Starting Flask app to keep container alive and bind to PORT=$PORT..."
+python3 /opt/socks5-proxy/web_status.py  # <-- Foreground process
