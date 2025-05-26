@@ -20,12 +20,14 @@ HTML_TEMPLATE = """
   <p><strong>Ngrok Address:</strong></p>
   <code>{{ ngrok_url }}</code>
   <p><strong>How to connect from macOS:</strong></p>
-  <code>System Settings → Network → Proxies → SOCKS Proxy
-
-Server: {{ ngrok_host }}
-Port:   {{ ngrok_port }}
-
-Type:   SOCKS5 (No Auth)</code>
+  <code>
+1. System Settings → Wi-Fi → Click your active network → Details → Proxies
+2. Enable "SOCKS Proxy"
+3. Server: {{ ngrok_host }}
+4. Port:   {{ ngrok_port }}
+5. Leave authentication blank
+6. Click OK, then Apply
+  </code>
   <p>This page refreshes every 30 seconds to keep the Render service alive.</p>
 </body>
 </html>
