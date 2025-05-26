@@ -52,7 +52,9 @@ RUN curl -s https://bin.equinox.io/c/bNyj1mQVY4c/ngrok-v3-stable-linux-amd64.tgz
 EXPOSE 1080 8080
 
 # Final run
-CMD bash -c "/usr/local/sbin/sockd -f /etc/socks5-proxy/sockd.conf & \
-             ngrok start --all & \
-             python3 /opt/socks5-proxy/keep_alive.py & \
-             python3 /opt/socks5-proxy/web_status.py"
+CMD bash -c "pkill ngrok || true && \
+rm -rf /root/.ngrok2 && \
+/usr/local/sbin/sockd -f /etc/socks5-proxy/sockd.conf & \
+ngrok start --all & \
+python3 /opt/socks5-proxy/keep_alive.py & \
+python3 /opt/socks5-proxy/web_status.py"
