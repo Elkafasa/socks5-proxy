@@ -24,8 +24,14 @@ echo "Starting ngrok tunnel..."
 ngrok start --all --config /opt/socks5-proxy/ngrok.yml --log=stdout > /var/log/ngrok.log 2>&1 &
 NGROK_PID=$!
 
-# Trap signals to gracefully shutdown all background processes
-trap "echo 'Stopping services...'; kill $SOCKD_PID $NGROK_PID; kill 0; exit" SIGINT SIGTERM
+# Function to safely kill a process if it exists
+safe_kill() {
+  if kill -0 "$1" 2>/dev/null; then
+    kill "$1"
+  fi
+}
 
-# Wait on sockd and ngrok to keep the container running
+trap "echo 'Stopping services...'; safe_kill $SOCKD_PID; safe_kill $NGROK_PID; kill 0; exit" SIGINT SIGTERM
+
+# Wait for sockd and ngrok to exit
 wait $SOCKD_PID $NGROK_PID
