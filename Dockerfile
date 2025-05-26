@@ -49,14 +49,12 @@ RUN curl -s https://bin.equinox.io/c/bNyj1mQVY4c/ngrok-v3-stable-linux-amd64.tgz
     chmod +x /usr/local/bin/ngrok && \
     rm ngrok.tgz
 
+# Copy entrypoint script
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
+# Expose necessary ports
 EXPOSE 1080 8080
 
-# Startup
-CMD bash -c "\
-pkill ngrok || true && \
-rm -rf /root/.ngrok2 && \
-/usr/local/sbin/sockd -f /etc/socks5-proxy/sockd.conf > /var/log/sockd.log 2>&1 & \
-ngrok start --all --config /opt/socks5-proxy/ngrok.yml --log=stdout > /var/log/ngrok.log 2>&1 & \
-python3 /opt/socks5-proxy/keep_alive.py > /var/log/keep_alive.log 2>&1 & \
-python3 /opt/socks5-proxy/web_status.py > /var/log/web_status.log 2>&1 & \
-wait"
+# Use entrypoint script
+ENTRYPOINT ["/entrypoint.sh"]
