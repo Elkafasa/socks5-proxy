@@ -54,6 +54,7 @@ def index():
         addr = "Ngrok tunnel not ready"
     return render_template_string(HTML_TEMPLATE, ngrok_url=addr, ngrok_host=host, ngrok_port=port)
 
+
 if __name__ == "__main__":
-    # One-time startup (no infinite loop), Render will keep it alive.
-    app.run(host="0.0.0.0", port=8080)
+    port = int(os.environ.get("PORT", 8080))  # Render provides $PORT env var
+    app.run(host="0.0.0.0", port=port)
