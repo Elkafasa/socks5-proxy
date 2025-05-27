@@ -1,5 +1,6 @@
+version: 3
 authtoken: 2bwYpX7UTbEJ9XTZJkFJwbMsHK1_6U52YGGsG37bUmGYgQL89
-version: 2
+web_addr: 0.0.0.0:4040
 tunnels:
   socks5:
     proto: tcp
